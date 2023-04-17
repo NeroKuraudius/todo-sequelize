@@ -6,6 +6,9 @@ Desktop.ini
 #vscode
 .vscode
 
+#sequelize init
+config.json
+
 # npm
 node_modules
 *.log
