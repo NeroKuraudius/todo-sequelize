@@ -30,6 +30,9 @@ module.exports = {
       }
     });
   },
+  // 用以執行與up相對的指令
+  // 如需還原上一步可輸入"npx sequelize db:migrate:undo"
+  // queryInterface為Sequelize使用的一個物件
   down: (queryInterface, Sequelize) => {
     return queryInterface.dropTable('Users');
   }
