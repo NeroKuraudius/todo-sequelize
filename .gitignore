@@ -3,6 +3,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+#vscode
+.vscode
+
 # npm
 node_modules
 *.log
