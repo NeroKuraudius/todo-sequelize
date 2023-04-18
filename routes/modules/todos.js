@@ -58,7 +58,7 @@ router.put('/:id', (req, res) => {
     .catch(err => console.log(err))
 })
 
-// 刪除
+// 刪除資料
 router.delete('/:id', (req, res) => {
   const UserId = req.user.id
   const id = req.params.id
