@@ -50,7 +50,7 @@ router.put('/:id', (req, res) => {
   return Todo.findOne({ where: { UserId,id} })
     .then(todo => {
       todo.name = name
-      todo.isDone = isDone === 'on'
+      todo.isDone = (isDone === 'on')
       todo.updatedAt = new Date()
       return todo.save()
     })
