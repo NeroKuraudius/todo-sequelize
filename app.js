@@ -3,9 +3,11 @@ const exphbs = require('express-handlebars')
 const methodOverride = require('method-override')
 const bcrypt = require('bcryptjs')
 const session = require('express-session')
+const passport = require('passport')
+const usePassport = require('./config/passport')
 
 const db = require('./models')
-const Todo =db.Todo
+const Todo = db.Todo
 const User = db.User
 
 const app = express()
@@ -18,21 +20,34 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use(methodOverride('_method'))
 
+app.use(session({
+  secret: 'ThisIsMySecret',
+  resave: false,
+  saveUninitialized: true
+}))
 
-// 登入頁
+usePassport(app)
+
+// 首頁
 app.get('/', (req, res) => {
   return Todo.findAll({
     raw: true,
-    nest: true 
+    nest: true
   }) // 上列程式碼等於Mongoose.find().lean()
     .then((todos) => { return res.render('index', { todos: todos }) })
     .catch((error) => { return res.status(422).json(error) })
 })
 
-//登入功能
-app.post('/users/login', (req, res) => {
-  res.send('login')
+// 登入頁
+app.get('/users/login', (req, res) => {
+  res.render('login')
 })
+
+//登入功能
+app.post('/users/login', passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/users/login'
+}))
 
 // 註冊頁
 app.get('/users/register', (req, res) => {
@@ -73,8 +88,8 @@ app.get('/users/logout', (req, res) => {
 // 查詢詳細
 app.get('/todos/:id', (req, res) => {
   const id = req.params.id
-  return Todo.findByPk(id)
-    .then(todo => res.render('detail', { todo: todo.toJSON() })) 
+  return Todo.findByPk(Number(id))
+    .then(todo => res.render('detail', { todo: todo.toJSON() }))
     // 上列程式碼等於Mongoose.findById().lean()
     .catch(error => console.log(error))
 })
