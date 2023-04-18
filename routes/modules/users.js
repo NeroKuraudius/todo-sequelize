@@ -4,7 +4,6 @@ const passport = require('passport')
 const bcrypt = require('bcryptjs')
 
 const db = require('../../models')
-const Todo = db.Todo
 const User = db.User
 
 
@@ -50,37 +49,39 @@ router.post('/register', (req, res) => {
   }
 
   User.findOne({ where: { email } })
-  .then(user => {
-    // 檢查使用者是否已註冊
-    if (user) {
-      errors.push({ message: '該帳號已註冊' })
-      return res.render('register', {
-        errors,
-        name,
-        email,
-        password,
-        confirmPassword
-      })
-    }
+    .then(user => {
+      // 檢查使用者是否已註冊
+      if (user) {
+        errors.push({ message: '該帳號已註冊' })
+        return res.render('register', {
+          errors,
+          name,
+          email,
+          password,
+          confirmPassword
+        })
+      }
 
-    return bcrypt
-      .genSalt(10)
-      .then(salt => bcrypt.hash(password, salt))
-      .then(hash => User.create({
-        name,
-        email,
-        password: hash
-      }))
-      .then(() => res.redirect('/'))
-      .catch(err => console.log(err))
-  })
+      return bcrypt
+        .genSalt(10)
+        .then(salt => bcrypt.hash(password, salt))
+        .then(hash => User.create({
+          name,
+          email,
+          password: hash
+        }))
+        .then(() => res.redirect('/'))
+        .catch(err => console.log(err))
+    })
 })
 
 // 登出功能
 router.get('/logout', (req, res) => {
-  req.logout()
-  req.flash('success_msg','登出成功')
-  res.send('logout')
+  req.logout((err) => {
+    if (err) return next(err)
+  })
+  req.flash('success_msg', '登出成功')
+  res.redirect('/')
 })
 
 module.exports = router
