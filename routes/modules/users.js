@@ -24,7 +24,7 @@ router.get('/register', (req, res) => {
 })
 
 // 註冊功能
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
   const { name, email, password, confirmPassword } = req.body
   const errors = []
 
@@ -48,39 +48,34 @@ router.post('/register', (req, res) => {
     })
   }
 
-  User.findOne({ where: { email } })
-    .then(user => {
-      // 檢查使用者是否已註冊
-      if (user) {
-        errors.push({ message: '該帳號已註冊' })
-        return res.render('register', {
-          errors,
-          name,
-          email,
-          password,
-          confirmPassword
-        })
-      }
+  try {
+    const findUser = await User.findOne({ where: { email } })
+    if (findUser) {
+      errors.push({ message: '該帳號已註冊' })
+      return res.render('register', {
+        errors,
+        name,
+        email,
+        password,
+        confirmPassword
+      })
+    }
 
-      return bcrypt
-        .genSalt(10)
-        .then(salt => bcrypt.hash(password, salt))
-        .then(hash => User.create({
-          name,
-          email,
-          password: hash
-        }))
-        .then(() => res.redirect('/'))
-        .catch(err => console.log(err))
-    })
+    const passwordGensalt = await bcrypt.genSalt(10)
+    const passwordHash = await bcrypt.hash(password, passwordGensalt)
+    const createUser = await User.create({ name, email, password: passwordHash })
+    return res.redirect('/')
+  } catch (err) {
+    console.log(err)
+  }
 })
 
 // 登出功能
-router.get('/logout', (req, res) => {
+router.get('/logout', (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err)
   })
-  req.flash('success_msg', '登出成功')
+  req.flash('success_msg', '您已成功登出')
   res.redirect('/')
 })
 

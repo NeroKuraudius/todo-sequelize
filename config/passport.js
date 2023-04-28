@@ -10,20 +10,20 @@ module.exports = app => {
   app.use(passport.initialize())
   app.use(passport.session())
 
-  passport.use(new LocalStrategy({ usernameField: 'email' ,passReqToCallback:true}, (req,email, password, done) => {
-    User.findOne({ where: { email } })
-      .then(user => {
-        if (!user) {
-          return done(null, false, req.flash('warning_msg', 'That email is not registered!' ))
-        }
-        return bcrypt.compare(password, user.password).then(isMatch => {
-          if (!isMatch) {
-            return done(null, false, req.flash('warning_msg', 'Email or Password incorrect.' ))
-          }
-          return done(null, user)
-        })
-      })
-      .catch(err => done(err, false))
+  passport.use(new LocalStrategy({ usernameField: 'email', passReqToCallback: true }, async (req, email, password, done) => {
+    try {
+      const findUser = await User.findOne({ where: { email } })
+      if (!findUser) {
+        return done(null, false, req.flash('warning_msg', 'That email is not registered!'))
+      }
+      const loginProcess = await bcrypt.compare(password, findUser.password)
+      if (!loginProcess) {
+        return done(null, false, req.flash('warning_msg', 'Email or Password is incorrect.'))
+      }
+      return done(null, findUser)
+    } catch (err) {
+      done(err)
+    }
   }))
 
   passport.use(new FBStrategy({
@@ -31,30 +31,31 @@ module.exports = app => {
     clientSecret: process.env.FB_SECRET,
     callbackURL: process.env.FB_CALLBACK,
     profileFields: ['email', 'displayName']
-  }, (accessToken, refreshToken, profile, done) => {
+  }, async (accessToken, refreshToken, profile, done) => {
     const { name, email } = profile._json
-    User.findOne({ where: { email } })
-      .then(user => {
-        if (user) return done(null, user)
-        const randomPassword = Math.random().toString(36).slice(-10)
-        bcrypt.genSalt(10)
-          .then(salt => bcrypt.hash(randomPassword, salt))
-          .then(hash => User.create({
-            name, email, password: hash
-          }))
-          .then(user => done(null, user))
-          .catch(err => done(err))
-      })
+    try {
+      const findUser = await User.findOne({ where: { email } })
+      if (findUser) return done(null, findUser)
+      const randomPassword = Math.random().toString(36).slice(-10) //產生隨機密碼
+      const passwordGensalt = await bcrypt.genSalt(10) // 撒鹽雜湊
+      const passwordHash = await bcrypt.hash(randomPassword, passwordGensalt) // 隨機密碼
+      const createNewUser = await User.create({ name, email, password: passwordHash }) // 創建新使用者
+      return done(null, createNewUser)
+    } catch (err) {
+      done(err)
+    }
   }))
 
   passport.serializeUser((user, done) => {
     done(null, user.id)
   })
-  passport.deserializeUser((id, done) => {
-    User.findByPk(id)
-      .then((user) => {
-        user = user.toJSON()
-        done(null, user)
-      }).catch(err => done(err, null))
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const findUser = await User.findByPk(id)
+      processedUser = findUser.toJSON()
+      return done(null, processedUser)
+    } catch (err) {
+      done(err)
+    }
   })
 }
