@@ -28,7 +28,7 @@
 1. 安裝好nvm後clone本專案
 2. 透過終端機輸入
 npm install
-3. 安裝完npm後輸入
+3. 安裝完後輸入
 npm run dev
 4. 若看見以下訊息表示運作成功
 Listening on http://*******:******
